@@ -1,0 +1,9 @@
+minimal_image
+
+* Needs vanilla Linux Kernel (is there a fucking smaller one?)
+* Needs BusyBox
+
+1. Build the kernel
+2. Build BusyBox
+3. Package BusyBox up into an initramfs file
+4. Fucken send it

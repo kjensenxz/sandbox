@@ -1,0 +1,28 @@
+process:
+	1. build a VM
+		1. build linux kernel, move to /path/to/image/kernelname
+		2. build userland, move to /path/to/image/initramfs/
+		TODO: 3. run ./buildscript /path/to/image
+	2. run qemu-img create -f qcow2 /path/to/image/backingfile.qcow2 size
+	3. build a config for it
+		1. find example layout in minimal_image.conf
+		format:
+			memory to use
+			/path/to/kernel
+			/path/to/initrd
+			'kernel boot params'
+			/path/to/backingfile.qcow2
+	4. run sandbox
+	5. connect to it, wonder why shit doesn't work???
+
+
+todo:
+	figure out how to write sandbox to handle dynamic allocation of VMs
+
+
+loose docs:
+	- sandbox uses a postgresql db named 'sandboxdb' w/ table 'sandboxes'
+	  (postgres seemed the best choice at the time)
+	  'sandboxes' lists pid (primary key), config file, console port,
+	  qmp port (inet only for both rn), and creation date.
+	  	* this table is used for RUNNING sandboxes!

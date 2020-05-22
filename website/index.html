@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Sandbox</title>
+	<style>
+		html, body {
+			background-color: seashell;
+			font-family: Sans Serif, Arial;
+		}
+		code {
+			background-color: aliceblue;
+			font-size: 1.15em;
+			padding: 1px;
+		}
+		p {
+		}
+	</style>
+</head>
+<body>
+	<h2>Sandbox RESTful API Documentation</h2>
+
+	<h4> Start a new Sandbox </h4>
+	<p>
+		<code>GET /start/image_name</code> 
+		-  Returns a socket to a VM to telnet into.
+	</p>
+
+	<h4> Stop an existing Sandbox </h4>
+	<p>
+		<code>GET /stop/socket</code>
+		- Stops a socket with an appropriate HTTP response code (e.g.,
+		  200 OK, 404 Not Found).
+	</p>
+
+	<h4> Check if a Sandbox is running </h4>
+	<p>
+		<code>GET /check/socket</code>
+		- Returns a JSON object with the image name or an 
+		  appropriate HTTP response code. (e.g., 404 Not Found).
+	</p>
+
+	<h4> Reset a running Sandbox </h4>
+	<p>
+		<code>GET /clean/socket</code>
+		- Returns a JSON object with the image name or an
+		  appropriate HTTP response code. (e.g., 404 Not Found).
+	</p>
+
+</body>
+</html>
+

@@ -1,0 +1,154 @@
+/**** SANDBOX.C *****/
+typedef enum argv_selector {
+	INIT,
+	START
+} argvsel_t;
+
+char **getqemuargv(vmconf_t *, argvsel_t, char **argv)
+
+/* getqemuargv takes a loaded vmconf_t, a selector, and an empty
+ * char * array. It returns parameters for use in execvp in argv,
+ * and the number of arguments therein or -1 on error.
+
+#define _INIT_ARGC_ 14
+#define _START_ARGC_ 10
+int
+getqemuargv(vmconf_t *conf, argvsel_t sel, char **argv) {
+	int argc = -1;
+	int i = -1;
+	const char *longarg = "socket,id=serio,port=%d,host=localhost,"
+	                      "server,nowait,telnet";
+
+	assert(NULL != conf);
+	assert(INIT == sel || START == sel)
+	assert(NULL == argv);
+
+	switch (sel) {
+		case INIT:
+argc = _INIT_ARGC_;
+			break;
+		
+		case START:
+			argc = _START_ARGC_;
+			break;
+
+		default:
+			return NULL;
+	}
+
+	argv = calloc(argc, sizeof (char *));
+
+	if (NULL == argv) {
+		die("Could not allocate memory in getqemuargv for argv.");
+	}
+
+	argv[0] = strdup("qemu-system-x86_64");
+	argv[1] = strdup(conf->imgfile);
+	argv[2] = strdup("-nographic");
+	argv[3] = strdup("-m");
+	argv[4] = strdup(conf->memsz);
+	argv[5] = strdup("-serial");
+	
+	switch (sel) {
+		case START:
+			argv[6] = strdup("chardev:serio");
+			argv[7] = strdup("-chardev");
+			/* because of \0 and replacement of %d with a max 
+			 * 5-digit port number, we need room for 4 more 
+			 * characters.
+			i = strlen(longarg) + 4;
+			argv[8] = calloc(i, sizeof (char));
+			if (NULL == argv[8]) {
+				die("Could not allocate memory in getqemuargv "
+				    "for argv[8]."
+				);
+			}
+			snprintf(argv[8], i, longarg, conf->portno);
+			break;
+
+		case INIT:
+			argv[6] = strdup("mon:stdio");
+			argv[7] = strdup("-kernel");
+			argv[8] = strdup(conf->kernel);
+			argv[9] = strdup("-initrd");
+			argv[10] = strdup(conf->initrd);
+			argv[11] = strdup("-append");
+			argv[12] = strdup(conf->append);
+	}
+	
+	return argc;
+}
+*/
+
+
+
+/**** CONFIG.C *****/
+/*
+#define BUFLEN_DEFAULT 32
+char **config(char *path) {
+	FILE *fcfg = NULL;
+	char **exec = NULL;
+	size_t n = -1;
+	int i = -1;
+	int rv = -1;
+	
+	fcfg = fopen(path, "r");
+	if (NULL == fcfg) {
+		 TODO: need some kind of error handling...
+		errsv = errno;
+		return NULL;
+	}
+
+	exec = calloc(BUFLEN_DEFAULT, sizeof(char *));
+	if (NULL == exec)
+
+	for (i = 0; i < BUFLEN_DEFAULT-1; ++i) {
+		n = 0;
+		rv = getline(&exec[i], &n, fcfg);
+		if (0 > rv) {
+			 TODO: need some kind of errorhhandling... 
+			errsv = errno;
+			return NULL;
+		}
+		
+
+	}
+
+	
+}
+
+int
+isspace(char c) {
+	return (c == ' ' || c == '\t' || c == '\r' || c == '\n');
+}
+*/
+
+/* c is the length of the string without the null-terminator. */
+char *chomp(char *s, int c) {
+	int i = -1;
+	int n = -1;
+	char *rv = NULL;
+
+//	assert(NULL != s && 0 <= c);
+	if (NULL == s || 0 >= c) {
+		return NULL;
+	}
+
+	for (i = c-1; 0 < i && rv == NULL; --i) {
+		assert(0 <= i);
+		assert('\0' != s[i]);
+		
+		if (isspace(s[i])) {
+			continue;
+		}
+		printf("allocating %d bytes...\n", i+1);
+		rv = calloc(i+1, sizeof(char));
+		if (rv == NULL) {
+			errsv = errno;
+			return NULL;
+		}
+		strncpy(rv, s, i);
+	}
+
+	return rv;
+}

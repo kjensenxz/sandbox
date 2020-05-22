@@ -1,0 +1,164 @@
+Uhhhhh.....
+
+Here is yet another attempt at codename shitbot. Because I eternally forget
+what I am going to accomplish with this bot, here is a rudimentary design doc.
+
+Abstract
+--------
+    Codename Shitbot (hereinafter referred to as Shitbot) is a preposed IRC bot
+to execute arbitrary commands on a Linux kernel environment with a BusyBox and
+Bash userland, C/C++ compiler, and various scripting language interpreters. The
+goal of this bot is to aid in the demonstration of various programming and
+system administration examples, such as Bash one-liners and arguments, to
+familiarize newbies with the command line, and to crowdsource programming 
+prototyping for e.g. an algorithm.
+
+    Shitbot has two major components: the virtual machine image and a warm
+snapshot thereof, and the IRC bot iself to recieve, execute, and send data plus
+manage VMs. The former is codenamed Sandbox.
+
+
+
+
+Sandbox
+-------
+    Sandbox is a preposed system for autonomously managing "sandbox" VMs. It
+starts up a small pool of pre-packaged VM images, will spin up more as demand
+increases, monitors their resource usage, and will terminate misbehaving
+virtual machines. The goal of this system is to expose an API for accessing,
+terminating, and re-initializing virtual machines. Sandbox does not define the
+virtual machine image, it does not access end user input nor virtual machine
+output (to prevent exploits in parsing).
+
+    Sandbox, by nature, is a daemon. This is to keep things responsive and to
+monitor the performance of its virtual machines. 
+
+Security
+--------
+    Sandbox brokers the connection to virtual machines that will be allowed to
+execute ANY command available in the guests' userland. It is being designed
+with Shitbot and a shell system in mind. 
+
+* Sandbox MUST NOT parse or accept user input directly.
+* Sandbox SHOULD NOT be directly accessible from the outside world.
+  -- Sidebar: treat it akin to a database - direct access = DROP *.
+* Sandbox MUST expose an API to start and stop virtual machine images.
+* Sandbox MAY expose an API to run different types of virtual machine images.
+* Sandbox MUST monitor all virtual machines.
+* Sandbox MUST NOT allow a virtual machine to be started without monitoring.
+* Sandbox MUST terminate a nonresponsive, malfunctioning, or misbehaving VM.
+* Sandbox MUST log all of its API calls with dates and caller.
+* Sandbox MAY authenticate its API caller.
+* Sandbox MUST NOT expose some sort of administration interface.
+  -- Note: an administrator will have shell access to the host.
+* Sandbox MUST prevent a breach of system security and integrity.
+* Sandbox MUST have a time-out.
+* Sandbox MUST monitor the network calls made to/from the virtual machine.
+* Sandbox MUST log all data coming into and out of the guest's console.
+* Sandbox MUST log all network data passing through the guest/host.
+* Sandbox SHOULD NOT attempt to preserve virtual machines.
+* Sandbox MAY require a watchdog, and terminate all virtual machines upon failure of Sandbox.
+
+Architecture & API
+------------------
+    The API should be _very_ simple. The proposed API is as follows:
+
+        get_sandbox(image); // starts image, returns a socket to open guest console directly.
+        end_sandbox(socket); // kill the image ID'd by socket, void.
+        clean_sandbox(socket); // reset the image ID'd by socket, void.
+        check_sandbox(socket); // check if image ID'd by socket is running, boolean.
+
+    Sandbox has a table of supported images, their dependencies, and their
+locations on the filesystem. On startup, it will maintain and monitor a 
+configured pool of virtual machines ready to be connected to.
+
+    When a VM image is requested, one will be started if not already; Sandbox
+will maintain a mapping of PIDs and sockets. Sandbox will provide the socket;
+if a VM image must be spun up, it will begin monitoring it.
+
+    Sandbox monitors the VM's resource consumption, its ingoing and outgoing
+network connections, all data coming into and out of the console and network,
+and the responsiveness of the system. If a guest is using too many resources 
+(configureable), or is not responding (likely via ping), Sandbox will terminate
+the guest, log the event, and forget about the guest in its tables. When Sandbox
+is requested to clean a guest, it will log the event, terminate the guest, and 
+reinitalize another copy of the image to be accessed via the same socket.
+
+    When Sandbox is requested to check on a guest, it will look up the guest in
+its table of guests, and verify there is an active PID on the host
+corresponding to the socket. It will then provide a true or false response.
+
+    Furthermore, Sandbox must monitor the active PIDs. It must clean up any
+zombied or orphaned processes. A watchdog must monitor Sandbox, and upon
+failure, terminate all active PIDs, clean them up, and clean up after Sandbox.
+The watchdog may optionally restart Sandbox cleanly, and perhaps provide a
+notification.
+
+Speculation
+-----------
+    The watchdog may also monitor the host system and terminate
+any suspicious activity, such as a breach in QEMU leading to a remote shell,
+which is probably less likely and less difficult to detect than remote code
+injection/execution. Lord save x86.
+
+    QEMU is kind of secure, but anything can happen by intentionally opening
+up an insecure sandbox system. Sandbox is probably not be the type of thing to
+be ran on mission-critical systems, and definitely without awesome security and
+at least a strict firewall. 
+
+    Denial of service is stupid simple in something like this. It is important
+to strictly limit the guests' memory and CPU time.
+
+    Users are well-known for doing illegal shit on someone else's computer when
+possible. Providing outbound network access is a major risk. If this is going
+to be done, it must serve the operator to mitigate and deflect legal
+implications. Going balls-deep with this idea and prototyping with outbound
+network access would quickly wind up with malicious users breaking the law, and
+implicating the operator.
+
+    One must go into this throwing all ideas of predictability out the window.
+A large number of attempts at breaking out of the sandbox can be deflected by
+minimizing the attack area. However, all it takes is a 0-day some skid bought
+for QEMU, KVM, x86, whatever. Or simply discovering a remote code execution in
+an anemic parser for a different subsystem, like Shitbot.
+
+    
+
+
+
+
+Here is the proposed API:
+
+ get_sandbox(image); // returns a socket
+ end_sandbox(socket); // void
+
+Here is the proposed 
+
+
+
+* If sandbox exposes a qemu system to, say, a fifo, the host machine may be at direct risk.
+* If sandbox exposes a socket directly to the console of the guest, the host machine may be insulated by qemu.
+
+
+
+    minimal Linux-kernel-based virtual machine image
+
+
+
+
+
+
+I would like to expand Shitbot into another service reusing the virtual machine
+architecture being designed for this purpose to grant (perhaps) a (shared)
+remote shell. This would add an additional component, and hopefully develop
+the virtual machine image into its own daemon to be accessed and used by any
+program. 
+
+        * The virtual machine to execute arbitrary commands
+        * The IRC bot itself to recieve/execute/send data & manage VMs.
+
+The major constraint is virtual machine size. This is probably going to be
+ran in a cloud (read: not baremetal) environment, meaning it's probably going
+to be double-emulated. This may be better achieved with a container. Therefore,
+my greatest requirement is size. This also makes loading & initializing a VM
+faster and use fewer resources. There is no need to run X11 and systemd.
