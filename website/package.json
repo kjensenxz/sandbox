@@ -13,6 +13,6 @@
 	"author": "Kenneth B. Jensen <kj@0x5f3759df.xyz",
 	"license": "null",
 	"dependencies": {
-		"express": "^4.17.1"
+		"express": "^4.17.3"
 	}
 }
